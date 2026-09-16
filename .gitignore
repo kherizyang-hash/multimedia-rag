@@ -1,0 +1,58 @@
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Python virtualenv (project-local venv layout)
+bin/
+include/
+lib/
+lib64
+share/
+pyvenv.cfg
+.venv/
+venv/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Runtime data (keep empty dirs via .gitkeep)
+data/uploads/*
+data/derived/*
+!data/uploads/.gitkeep
+!data/derived/.gitkeep
+
+# Internal / working docs (not for public repo)
+DESIGN.md
+HANDOFF.md
+变更记录.md
+讲解约定.md
+
+# IDE / OS
+.idea/
+.vscode/
+.cursor/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+npm-debug.log*
+*.tmp
+*.temp

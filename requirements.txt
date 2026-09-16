@@ -1,0 +1,21 @@
+openai-whisper>=20231117
+imageio-ffmpeg>=0.5.0
+faster-whisper>=1.0.0
+opencc-python-reimplemented>=0.1.7
+dashscope>=1.20.0
+bilibili-api-python
+requests>=2.31.0
+pymilvus>=2.4.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+pytest>=7.0.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+python-multipart>=0.0.9
+psycopg2-binary>=2.9.0
+
+# System note:
+# - Prefer `sudo apt-get install -y ffmpeg` when apt works.
+# - This DevBox may have broken apt deps; pipeline falls back to imageio-ffmpeg's bundled binary.
+# - ASR: prefer faster-whisper; falls back to openai-whisper if unavailable.

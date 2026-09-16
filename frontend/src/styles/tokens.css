@@ -1,0 +1,114 @@
+:root {
+  /* 全局略淡：少黄、少饱和，长读更省眼 */
+  --color-paper: #faf7f1;
+  --color-wheat: #efe6d4;
+  --color-ink: #2c281f;
+  --color-ink-muted: #6a6358;
+  --color-amber: #b8863a;
+  --color-amber-deep: #946a28;
+  --color-edge: #e4dcc8;
+  --color-white: #fffcf7;
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", sans-serif;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --shadow-soft: 0 12px 40px rgba(42, 36, 24, 0.06);
+  --max-width: 960px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  /* 默认已压平；阅读页再用 .surface-read 完全安静 */
+  background: var(--color-paper);
+  background-attachment: fixed;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 首页：保留一点暖意氛围，但不刺眼 */
+body.surface-home {
+  background:
+    radial-gradient(900px 420px at 50% -8%, rgba(184, 134, 58, 0.07), transparent 58%),
+    linear-gradient(180deg, #f3ead8 0%, var(--color-paper) 48%, #faf7f1 100%);
+}
+
+/* 预览 / 笔记内讨论 / 全局问答：安静纸面 */
+body.surface-read {
+  background: var(--color-paper);
+}
+
+a {
+  color: var(--color-amber-deep);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--color-amber);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#app {
+  min-height: 100%;
+  height: 100%;
+}
+
+/* 主题滚动条：细、圆、淡麦色 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-amber) 35%, var(--color-edge)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-amber) 32%, var(--color-edge));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-amber) 55%, var(--color-edge));
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
