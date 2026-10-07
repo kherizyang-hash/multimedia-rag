@@ -13,6 +13,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("/note", response_model=ChatResponse)
 def api_chat_on_note(body: NoteChatRequest) -> ChatResponse:
+    print(f"[API] POST /api/chat/note note_id={body.note_id}")
     try:
         return chat_on_note(
             note_id=body.note_id,
@@ -38,6 +39,7 @@ def api_chat_on_note(body: NoteChatRequest) -> ChatResponse:
 
 @router.post("/global", response_model=ChatResponse)
 def api_chat_global(body: GlobalChatRequest) -> ChatResponse:
+    print(f"[API] POST /api/chat/global query={body.query[:80]!r}")
     try:
         return chat_global(
             user_query=body.query,

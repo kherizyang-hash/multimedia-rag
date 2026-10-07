@@ -98,6 +98,21 @@ def test_chat_global_with_permanent_note(client: TestClient):
         # 有检索命中时 sources 带 note_id；极端空库时也可能为空，但本用例刚入库应命中
         if data["sources"]:
             assert any(s["note_id"] == str(note.id) for s in data["sources"])
+
+        empty_ids = client.post(
+            "/api/chat/global",
+            json={
+                "query": "差旅助手能做什么？",
+                "note_ids": [],
+                "history": [],
+            },
+        )
+        assert empty_ids.status_code == 200, empty_ids.text
+        empty_data = empty_ids.json()
+        assert empty_data["answer"]
+        assert isinstance(empty_data["sources"], list)
+        assert empty_data["sources"], "note_ids=[] 应检索全部永久笔记，sources 不应为空"
+        assert any(s["note_id"] == str(note.id) for s in empty_data["sources"])
     finally:
         delete_note(note.id)
 

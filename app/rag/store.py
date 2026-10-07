@@ -18,7 +18,9 @@ def insert_chunks(note_id: UUID, chunks: List[Chunk]) -> None:
     chunks 为空则直接返回；失败抛异常（由调用方保证不翻转 is_permanent）。
     """
     if not chunks:
+        print(f"[STORE] 跳过入库：笔记 {note_id} 无切片")
         return
+    print(f"[STORE] 开始向量化入库：笔记 {note_id}，切片 {len(chunks)} 条")
 
     texts = [c.text for c in chunks]
     vectors = embed_texts(texts)
@@ -64,13 +66,64 @@ def insert_chunks(note_id: UUID, chunks: List[Chunk]) -> None:
         ]
     )
     collection.flush()
+    print(f"[STORE] 入库完成：笔记 {note_id}，切片 {len(chunks)} 条")
 
 
 def delete_chunks(note_id: UUID) -> None:
     """按 note_id 删除该笔记全部向量。"""
+    print(f"[STORE] 删除向量：笔记 {note_id}")
     collection = get_collection()
     collection.delete(expr=f'note_id == "{note_id}"')
     collection.flush()
+    print(f"[STORE] 已删除笔记 {note_id} 的向量")
+
+
+def list_chunks(note_id: str | UUID) -> List[dict]:
+    """从 Milvus 读取某笔记全部切片（供 BM25 建索引）。"""
+    collection = get_collection()
+    collection.load()
+    results = collection.query(
+        expr=f'note_id == "{note_id}"',
+        output_fields=[
+            "id",
+            "note_id",
+            "text",
+            "start_sec",
+            "end_sec",
+            "page",
+            "layer",
+            "metadata",
+        ],
+        limit=16384,
+    )
+    rows: List[dict] = []
+    for entity in results or []:
+        start = entity.get("start_sec")
+        end = entity.get("end_sec")
+        page = entity.get("page")
+        if start is not None and float(start) == settings.MISSING_FLOAT:
+            start = None
+        if end is not None and float(end) == settings.MISSING_FLOAT:
+            end = None
+        if page is not None and int(page) == settings.MISSING_INT:
+            page = None
+        meta = entity.get("metadata") or {}
+        if not isinstance(meta, dict):
+            meta = {}
+        rows.append(
+            {
+                "chunk_id": str(entity.get("id") or ""),
+                "note_id": str(entity.get("note_id") or note_id),
+                "text": str(entity.get("text") or ""),
+                "score": 0.0,
+                "start_sec": float(start) if start is not None else None,
+                "end_sec": float(end) if end is not None else None,
+                "page": int(page) if page is not None else None,
+                "layer": entity.get("layer"),
+                "metadata": meta,
+            }
+        )
+    return rows
 
 
 def count_chunks(note_id: UUID) -> int:
@@ -97,6 +150,7 @@ def search_chunks(
     if not query or not query.strip():
         return []
 
+    print(f"[STORE] 向量检索 top_k={top_k} note_ids={len(note_ids or [])}")
     vector = embed_text(query.strip())
     collection = get_collection()
     collection.load()
@@ -163,4 +217,12 @@ def search_chunks(
                 metadata=meta,
             )
         )
-    return results
+
+    raw_n = len(results)
+    floor = float(settings.RAG_VECTOR_MIN_SCORE)
+    kept = [r for r in results if float(r.score or 0.0) >= floor]
+    print(
+        f"[STORE] 向量检索原始 {raw_n} 条 → 相似度过滤后 {len(kept)} 条"
+        f"（min_score={floor}）"
+    )
+    return kept

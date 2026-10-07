@@ -14,7 +14,7 @@ from app.pipeline.audio_splitter import (
     split_audio,
 )
 from app.pipeline.cleaner import clean_segments, clean_text
-from app.pipeline.note_generator import generate_summary_and_mindmap
+from app.pipeline.summarizer import summarize_long_text
 from app.pipeline.transcriber import engine_name, transcribe
 from app.pipeline.zh_convert import segments_to_simplified, to_simplified
 
@@ -58,6 +58,7 @@ def process_audio_file(
 
     t0 = time.perf_counter()
     split_paths: list[str] = []
+    print(f"[PIPELINE] 开始处理音频：{audio_path}")
 
     try:
         duration = get_audio_duration(audio_path)
@@ -139,8 +140,15 @@ def process_audio_file(
         t_clean = time.perf_counter() - t
 
         t = time.perf_counter()
-        _notify(task_id, 95, "生成摘要与思维导图…")
-        ai_title, summary, mindmap = generate_summary_and_mindmap(cleaned_full)
+        _notify(task_id, 92, "生成摘要与思维导图…")
+        qwen = summarize_long_text(
+            cleaned_full,
+            segments=segments,
+            task_id=task_id,
+        )
+        ai_title = qwen.get("title")
+        summary = qwen.get("summary")
+        mindmap = qwen.get("mindmap")
         t_qwen = time.perf_counter() - t
 
         note_title = (title or "").strip() or ai_title

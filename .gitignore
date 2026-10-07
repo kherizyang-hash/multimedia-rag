@@ -56,3 +56,6 @@ Thumbs.db
 npm-debug.log*
 *.tmp
 *.temp
+
+# 测试数据（不提交）
+data/test_*.txt

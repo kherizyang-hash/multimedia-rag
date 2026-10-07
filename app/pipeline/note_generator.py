@@ -5,10 +5,8 @@ from __future__ import annotations
 import re
 from typing import Dict, Optional, Tuple
 
-import dashscope
-from dashscope import Generation
-
 from app.config import settings
+from app.llm_dashscope import chat_completions
 
 
 def build_prompt(cleaned_text: str) -> str:
@@ -26,14 +24,19 @@ def build_prompt(cleaned_text: str) -> str:
 ### 任务0：标题
 用简体中文写一个短标题（8～20 字为宜），概括本期核心主题；不要用「视频」「转写」「笔记」等空洞词，不要加书名号。
 
-### 任务1：总结笔记
-用简体中文写一篇好读的学习笔记（像听完课后自己整理给同学看的那种），要求：
-- 开头用 1～2 句话点明「这期大概在讲什么」
-- 结构要「该分则分、不该分则合」：叙述与过渡用自然段；真正并列的要点（组件、步骤、对比项、能力清单等）用少量「-」列表，一眼能扫到
-- 不要写成 1. / 1.1 / 1.2 的厚大纲或说明书体；也不要整篇纯自然段、把并列信息全揉进长句里
-- 全文列表块控制在大约 2～4 处，每处条目宜短；段落与列表穿插即可
-- 语气自然、简洁，保留关键信息与专有名词（一律用纠正后的正确写法）
-- 篇幅随转写稿长短自然伸缩，不凑字数、不刻意灌水
+### 任务1：总结笔记（轻结构化）
+用简体中文写一篇好读的学习笔记，采用「总述 + 加粗小标题 + 段落」：
+
+1. **开头总述**（约 100～200 字）：概括视频核心内容；**不要**给总述加小标题。
+2. **分 3～6 个小节展开**：每个小节以 Markdown **加粗小标题**单独成行开头，例如 `**剧情反转与人物抉择**`，下面跟 1～3 段正文。
+3. **小标题由内容自适应**（不要写死、不要固定套同一套名字）：
+   - 叙事类 → 时间线、剧情节点等具体说法
+   - 论述类 → 论点、主题等具体说法
+   - 教程类 → 步骤、要点等具体说法
+   - 访谈类 → 话题、观点等具体说法
+4. 小标题要**具体**，能反映该节在讲什么；禁止「第一部分」「第二点」「概述」「正文」等空泛编号式标题。
+5. **段落为主**；小节下若有真并列项可用少量「-」列表，但不要做成 1. / 1.1 / 1.2 厚大纲或说明书体。
+6. 语气自然、简洁，保留关键信息与专有名词（一律用纠正后的正确写法）；篇幅随内容伸缩，不凑字数。
 
 ### 任务2：思维导图
 用 **Mermaid flowchart LR** 输出从左到右的树状结构（一级标题 → 二级 → 要点），要求：
@@ -140,25 +143,21 @@ def call_qwen(prompt: str) -> Dict[str, Optional[str]]:
         print("[Qwen] DASHSCOPE_API_KEY 未配置")
         return empty
 
-    dashscope.api_key = settings.DASHSCOPE_API_KEY
-
     try:
-        response = Generation.call(
-            model=settings.QWEN_MODEL,
-            messages=[{"role": "user", "content": prompt}],
+        print(f"[Qwen] 开始生成摘要/导图，prompt 约 {len(prompt)} 字")
+        content = chat_completions(
+            [{"role": "user", "content": prompt}],
             max_tokens=settings.QWEN_MAX_TOKENS,
             temperature=0.7,
-            result_format="message",
         )
-
-        status = getattr(response, "status_code", None)
-        if status == 200:
-            content = response.output.choices[0].message.content
-            return parse_response(str(content))
-
-        message = getattr(response, "message", response)
-        print(f"[Qwen] API error: status={status}, message={message}")
-        return empty
+        parsed = parse_response(content)
+        print(
+            "[Qwen] 解析完成 "
+            f"title={'有' if parsed.get('title') else '无'} "
+            f"summary={'有' if parsed.get('summary') else '无'} "
+            f"mindmap={'有' if parsed.get('mindmap') else '无'}"
+        )
+        return parsed
     except Exception as exc:  # noqa: BLE001 — 流水线容错
         print(f"[Qwen] Exception: {exc}")
         return empty
@@ -167,7 +166,10 @@ def call_qwen(prompt: str) -> Dict[str, Optional[str]]:
 def generate_summary_and_mindmap(
     text: str,
 ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-    """高层接口：清洗稿 → (title, summary, mindmap_markdown)。"""
+    """
+    高层接口：清洗稿 → (title, summary, mindmap_markdown)。
+    长文请优先用 pipeline.summarizer.summarize_long_text（支持 map-reduce）。
+    """
     if not text or not text.strip():
         return None, None, None
     result = call_qwen(build_prompt(text.strip()))

@@ -29,6 +29,11 @@ class ChatSource(BaseModel):
     note_id: UUID
     title: str
     start_sec: Optional[float] = None
+    hit_count: int = Field(
+        default=1,
+        ge=1,
+        description="该笔记在本轮检索中命中的片段数（按 note_id 去重后保留）",
+    )
 
 
 class ChatResponse(BaseModel):

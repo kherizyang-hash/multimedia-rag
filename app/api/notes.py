@@ -38,6 +38,7 @@ def api_list_notes(
     ),
 ) -> NoteListResponse:
     items = list_notes(category=category, is_permanent=is_permanent)
+    print(f"[API] GET /api/notes 返回 {len(items)} 条")
     return NoteListResponse(items=items, total=len(items))
 
 
@@ -54,6 +55,7 @@ def api_get_note(note_id: UUID) -> Note:
 
 @router.post("/{note_id}/permanentize", response_model=Note)
 def api_permanentize_note(note_id: UUID) -> Note:
+    print(f"[API] POST /api/notes/{note_id}/permanentize")
     try:
         return permanentize_note(note_id)
     except NoteNotFoundError as exc:
@@ -70,6 +72,7 @@ def api_permanentize_note(note_id: UUID) -> Note:
 
 @router.delete("/{note_id}", response_model=DeleteResponse)
 def api_delete_note(note_id: UUID) -> DeleteResponse:
+    print(f"[API] DELETE /api/notes/{note_id}")
     try:
         delete_note(note_id)
     except NoteNotFoundError as exc:

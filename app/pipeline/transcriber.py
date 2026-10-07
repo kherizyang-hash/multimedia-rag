@@ -79,18 +79,26 @@ def transcribe(audio_path: str, model_name: str | None = None) -> Dict[str, Any]
 
     _ensure_ffmpeg_on_path()
     name = model_name or settings.WHISPER_MODEL
+    print(f"[ASR] 开始转写 file={audio_path} model={name}")
 
     if not _FASTER_DISABLED and _faster_whisper_importable():
         try:
             result = _transcribe_faster(audio_path, name)
             _LAST_ENGINE = "faster-whisper"
+            print(
+                f"[ASR] faster-whisper 完成，片段 {len(result.get('segments') or [])} 条"
+            )
             return result
         except Exception as exc:  # noqa: BLE001
             print(f"[transcriber] faster-whisper 失败，回退 openai-whisper: {exc}")
             _FASTER_DISABLED = True
 
     _LAST_ENGINE = "openai-whisper"
-    return _transcribe_openai(audio_path, name)
+    result = _transcribe_openai(audio_path, name)
+    print(
+        f"[ASR] openai-whisper 完成，片段 {len(result.get('segments') or [])} 条"
+    )
+    return result
 
 
 def engine_name() -> str:

@@ -73,6 +73,9 @@ function htmlFor(msg) {
             <template v-if="formatSeconds(s.start_sec)">
               · {{ formatSeconds(s.start_sec) }}
             </template>
+            <template v-if="s.hit_count && s.hit_count > 1">
+              · 命中 {{ s.hit_count }} 个片段
+            </template>
           </li>
         </ul>
       </div>

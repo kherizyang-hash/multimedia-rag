@@ -82,7 +82,7 @@ def test_build_prompt_contains_text():
     assert "【思维导图】" in prompt
     # Prompt：段落与列表穿插，导图用 Mermaid
     assert "1. / 1.1 / 1.2" in prompt or "厚大纲" in prompt
-    assert "该分则分" in prompt or "列表" in prompt
+    assert "轻结构化" in prompt or "加粗小标题" in prompt
     assert "flowchart LR" in prompt or "mindmap" in prompt
 
 

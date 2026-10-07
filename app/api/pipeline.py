@@ -203,6 +203,7 @@ async def api_process_video(
 
     task = create_task("video")
     task_id = task["id"]
+    print(f"[API] 提交视频任务 job_id={task_id} file={file.filename}")
     background_tasks.add_task(
         _run_video_job,
         task_id,
@@ -230,6 +231,7 @@ async def api_process_bilibili(
 
     task = create_task("bilibili")
     task_id = task["id"]
+    print(f"[API] 提交 B 站任务 job_id={task_id} url={body.url[:80]}")
     custom_title = (body.title or "").strip() or None
     background_tasks.add_task(
         _run_bilibili_job,
